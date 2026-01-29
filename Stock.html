@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Stock Analytics | Alphabet Inc. (GOOGL)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --google-blue: #4285F4;
+            --google-red: #EA4335;
+            --google-yellow: #FBBC05;
+            --google-green: #34A853;
+            --dark-bg: #202124;
+            --card-bg: #303134;
+            --text-primary: #E8EAED;
+            --text-secondary: #9AA0A6;
+            --border: #5F6368;
+            --success: #34A853;
+            --danger: #EA4335;
+        }
+
+        body {
+            font-family: 'Google Sans', 'Segoe UI', Roboto, sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--google-blue), var(--google-green));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 8px 32px rgba(66, 133, 244, 0.3);
+        }
+
+        .brand-info h1 {
+            font-size: 2.2rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .brand-info p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .stock-ticker {
+            text-align: right;
+        }
+
+        .ticker-symbol {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--google-blue);
+        }
+
+        .ticker-price {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        .ticker-change {
+            font-size: 1rem;
+            color: var(--success);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        .control-group select,
+        .control-group input {
+            padding: 12px 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            min-width: 150px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--google-blue);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #3367D6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.4);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+            border-color: var(--google-blue);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background: rgba(66, 133, 244, 0.2);
+            color: var(--google-blue);
+        }
+
+        .stat-icon.volatility { background: rgba(234, 67, 53, 0.2); color: var(--google-red); }
+        .stat-icon.volume { background: rgba(251, 188, 5, 0.2); color: var(--google-yellow); }
+        .stat-icon.return { background: rgba(52, 168, 83, 0.2); color: var(--google-green); }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .stat-change {
+            font-size: 0.85rem;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+
+        /* Charts Layout */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .chart-card.full { grid-column: span 12; }
+        .chart-card.half { grid-column: span 6; }
+        .chart-card.third { grid-column: span 4; }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chart-btn {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .chart-btn:hover, .chart-btn.active {
+            background: var(--google-blue);
+            color: white;
+            border-color: var(--google-blue);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+        }
+
+        .chart-container.small {
+            height: 300px;
+        }
+
+        /* Analysis Section */
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .analysis-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .analysis-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            color: var(--google-blue);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .metric-value {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .positive { color: var(--google-green); }
+        .negative { color: var(--google-red); }
+
+        /* Data Table */
+        .table-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .data-table tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .trend-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .trend-up {
+            background: rgba(52, 168, 83, 0.2);
+            color: var(--google-green);
+        }
+
+        .trend-down {
+            background: rgba(234, 67, 53, 0.2);
+            color: var(--google-red);
+        }
+
+        /* Loading */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--dark-bg);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border);
+            border-top-color: var(--google-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .chart-card.half { grid-column: span 12; }
+            .chart-card.third { grid-column: span 6; }
+        }
+
+        @media (max-width: 768px) {
+            .chart-card.third { grid-column: span 12; }
+            .header { flex-direction: column; gap: 20px; text-align: center; }
+            .stock-ticker { text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div>Loading Google Stock Analytics...</div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="brand">
+                <div class="logo">G</div>
+                <div class="brand-info">
+                    <h1>Alphabet Inc.</h1>
+                    <p>Class A Shares (GOOGL) • NASDAQ</p>
+                </div>
+            </div>
+            <div class="stock-ticker">
+                <div class="ticker-symbol">GOOGL</div>
+                <div class="ticker-price" id="currentPrice">$138.21</div>
+                <div class="ticker-change" id="priceChange">+2.45 (+1.81%)</div>
+            </div>
+        </header>
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="control-group">
+                <label>Time Period</label>
+                <select id="periodSelect">
+                    <option value="1M">1 Month</option>
+                    <option value="3M">3 Months</option>
+                    <option value="6M">6 Months</option>
+                    <option value="1Y" selected>1 Year</option>
+                    <option value="5Y">5 Years</option>
+                    <option value="ALL">All Time</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Chart Type</label>
+                <select id="chartType">
+                    <option value="candlestick">Candlestick</option>
+                    <option value="line">Line</option>
+                    <option value="area">Area</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Moving Average</label>
+                <select id="maSelect">
+                    <option value="none">None</option>
+                    <option value="20">20-Day SMA</option>
+                    <option value="50" selected>50-Day SMA</option>
+                    <option value="200">200-Day SMA</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>From Date</label>
+                <input type="date" id="startDate">
+            </div>
+            <div class="control-group">
+                <label>To Date</label>
+                <input type="date" id="endDate">
+            </div>
+            <button class="btn btn-primary" onclick="updateDashboard()">
+                <i class="fas fa-sync"></i> Update
+            </button>
+        </div>
+
+        <!-- Key Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                </div>
+                <div class="stat-value" id="avgVolume">24.5M</div>
+                <div class="stat-label">Avg Daily Volume</div>
+                <div class="stat-change positive">↑ 12% vs last month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon volatility"><i class="fas fa-wave-square"></i></div>
+                </div>
+                <div class="stat-value" id="volatility">23.4%</div>
+                <div class="stat-label">Volatility (Annual)</div>
+                <div class="stat-change negative">↑ 5% vs last month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon return"><i class="fas fa-percentage"></i></div>
+                </div>
+                <div class="stat-value" id="ytdReturn">+42.8%</div>
+                <div class="stat-label">YTD Return</div>
+                <div class="stat-change positive">Outperforming S&P 500</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon volume"><i class="fas fa-coins"></i></div>
+                </div>
+                <div class="stat-value" id="marketCap">$1.72T</div>
+                <div class="stat-label">Market Cap</div>
+                <div class="stat-change positive">↑ 8% this quarter</div>
+            </div>
+        </div>
+
+        <!-- Main Charts -->
+        <div class="charts-grid">
+            <!-- Price Chart -->
+            <div class="chart-card full">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-area" style="color: var(--google-blue);"></i>
+                        Price Trends & Moving Averages
+                    </div>
+                    <div class="chart-actions">
+                        <button class="chart-btn active" onclick="setChartType('price')">Price</button>
+                        <button class="chart-btn" onclick="setChartType('candle')">Candlestick</button>
+                        <button class="chart-btn" onclick="setChartType('compare')">Compare Index</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Volume Chart -->
+            <div class="chart-card half">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <i class="fas fa-bar-chart" style="color: var(--google-yellow);"></i>
+                        Trading Volume
+                    </div>
+                </div>
+                <div class="chart-container small">
+                    <canvas id="volumeChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Volatility Chart -->
+            <div class="chart-card half">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-line" style="color: var(--google-red);"></i>
+                        Volatility Analysis (Bollinger Bands)
+                    </div>
+                </div>
+                <div class="chart-container small">
+                    <canvas id="volatilityChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Returns Distribution -->
+            <div class="chart-card third">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-pie" style="color: var(--google-green);"></i>
+                        Daily Returns
+                    </div>
+                </div>
+                <div class="chart-container small">
+                    <canvas id="returnsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Monthly Performance -->
+            <div class="chart-card third">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <i class="fas fa-calendar" style="color: var(--google-blue);"></i>
+                        Monthly Performance
+                    </div>
+                </div>
+                <div class="chart-container small">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- RSI Indicator -->
+            <div class="chart-card third">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <i class="fas fa-tachometer" style="color: var(--google-yellow);"></i>
+                        RSI Indicator
+                    </div>
+                </div>
+                <div class="chart-container small">
+                    <canvas id="rsiChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Analysis -->
+        <div class="analysis-grid">
+            <div class="analysis-card">
+                <h3><i class="fas fa-calculator"></i> Technical Indicators</h3>
+                <div class="metric-row">
+                    <span class="metric-label">50-Day SMA</span>
+                    <span class="metric-value" id="sma50">$134.56</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">200-Day SMA</span>
+                    <span class="metric-value" id="sma200">$128.34</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">RSI (14)</span>
+                    <span class="metric-value positive" id="rsi">62.45</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">MACD</span>
+                    <span class="metric-value positive" id="macd">+2.34</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Bollinger Bands</span>
+                    <span class="metric-value">$142.20 / $130.15</span>
+                </div>
+            </div>
+
+            <div class="analysis-card">
+                <h3><i class="fas fa-chart-bar"></i> Performance Metrics</h3>
+                <div class="metric-row">
+                    <span class="metric-label">52-Week High</span>
+                    <span class="metric-value positive" id="high52">$142.38</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">52-Week Low</span>
+                    <span class="metric-value negative" id="low52">$88.58</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Avg Volume (3M)</span>
+                    <span class="metric-value">28.4M</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Beta</span>
+                    <span class="metric-value">1.05</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">P/E Ratio</span>
+                    <span class="metric-value">25.6</span>
+                </div>
+            </div>
+
+            <div class="analysis-card">
+                <h3><i class="fas fa-balance-scale"></i> Market Comparison</h3>
+                <div class="metric-row">
+                    <span class="metric-label">GOOGL vs S&P 500</span>
+                    <span class="metric-value positive">+15.2%</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">GOOGL vs NASDAQ</span>
+                    <span class="metric-value positive">+8.7%</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">GOOGL vs Tech Sector</span>
+                    <span class="metric-value positive">+12.3%</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Correlation (S&P 500)</span>
+                    <span class="metric-value">0.82</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Alpha</span>
+                    <span class="metric-value positive">+4.2%</span>
+                </div>
+            </div>
+
+            <div class="analysis-card">
+                <h3><i class="fas fa-lightbulb"></i> AI Insights</h3>
+                <div class="metric-row">
+                    <span class="metric-label">Trend Signal</span>
+                    <span class="metric-value positive">Bullish</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Support Level</span>
+                    <span class="metric-value">$132.50</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Resistance Level</span>
+                    <span class="metric-value">$145.00</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Price Target (12M)</span>
+                    <span class="metric-value positive">$165.00</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Recommendation</span>
+                    <span class="metric-value positive">Strong Buy</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Data Table -->
+        <div class="table-card">
+            <div class="chart-header">
+                <div class="chart-title">
+                    <i class="fas fa-table" style="color: var(--google-blue);"></i>
+                    Recent Trading Sessions
+                </div>
+                <button class="btn btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">
+                    <i class="fas fa-download"></i> Export CSV
+                </button>
+            </div>
+            <table class="data-table" id="stockTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Open</th>
+                        <th>High</th>
+                        <th>Low</th>
+                        <th>Close</th>
+                        <th>Adj Close</th>
+                        <th>Volume</th>
+                        <th>Change</th>
+                        <th>Trend</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Dynamic content -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Generate realistic Google stock data from IPO (Aug 2004) to Nov 2023
+        function generateGoogleStockData() {
+            const data = [];
+            const startDate = new Date('2004-08-19');
+            const endDate = new Date('2023-11-10');
+            
+            let currentPrice = 100; // Approximate IPO price adjusted
+            let trend = 0.0002; // Slight upward bias
+            
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                // Skip weekends
+                if (d.getDay() === 0 || d.getDay() === 6) continue;
+                
+                // Add some randomness with trend
+                const volatility = 0.02; // 2% daily volatility
+                const randomChange = (Math.random() - 0.5) * volatility;
+                const change = trend + randomChange;
+                
+                const open = currentPrice * (1 + (Math.random() - 0.5) * 0.01);
+                const close = currentPrice * (1 + change);
+                const high = Math.max(open, close) * (1 + Math.random() * 0.015);
+                const low = Math.min(open, close) * (1 - Math.random() * 0.015);
+                const volume = Math.floor(Math.random() * 20000000) + 5000000;
+                
+                // Adjusted close (accounting for splits - 2014 split adjusted)
+                const adjClose = close * 2; // Simplified adjustment
+                
+                data.push({
+                    date: new Date(d),
+                    open: parseFloat(open.toFixed(2)),
+                    high: parseFloat(high.toFixed(2)),
+                    low: parseFloat(low.toFixed(2)),
+                    close: parseFloat(close.toFixed(2)),
+                    adjClose: parseFloat(adjClose.toFixed(2)),
+                    volume: volume
+                });
+                
+                currentPrice = close;
+                
+                // Occasional trend shifts
+                if (Math.random() < 0.01) trend = (Math.random() - 0.4) * 0.001;
+            }
+            
+            return data;
+        }
+
+        let stockData = generateGoogleStockData();
+        let charts = {};
+
+        function initDashboard() {
+            setDefaultDates();
+            showLoading();
+            setTimeout(() => {
+                updateStats();
+                initCharts();
+                updateTable();
+                hideLoading();
+            }, 1000);
+        }
+
+        function setDefaultDates() {
+            const endDate = new Date('2023-11-10');
+            const startDate = new Date(endDate);
+            startDate.setFullYear(startDate.getFullYear() - 1);
+            
+            document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+            document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+        }
+
+        function getFilteredData() {
+            const startDate = new Date(document.getElementById('startDate').value);
+            const endDate = new Date(document.getElementById('endDate').value);
+            
+            return stockData.filter(d => d.date >= startDate && d.date <= endDate);
+        }
+
+        function updateStats() {
+            const data = getFilteredData();
+            const latest = data[data.length - 1];
+            const prev = data[data.length - 2];
+            
+            const change = latest.close - prev.close;
+            const changePct = (change / prev.close * 100).toFixed(2);
+            
+            document.getElementById('currentPrice').textContent = `$${latest.close.toFixed(2)}`;
+            document.getElementById('priceChange').textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)} (${change >= 0 ? '+' : ''}${changePct}%)`;
+            document.getElementById('priceChange').className = change >= 0 ? 'ticker-change positive' : 'ticker-change negative';
+            
+            // Calculate additional metrics
+            const avgVolume = data.reduce((sum, d) => sum + d.volume, 0) / data.length;
+            document.getElementById('avgVolume').textContent = formatNumber(avgVolume);
+            
+            // Volatility (standard deviation of returns)
+            const returns = data.slice(1).map((d, i) => (d.close - data[i].close) / data[i].close);
+            const volatility = Math.sqrt(returns.reduce((sum, r) => sum + r * r, 0) / returns.length) * Math.sqrt(252) * 100;
+            document.getElementById('volatility').textContent = volatility.toFixed(1) + '%';
+            
+            // YTD Return
+            const ytdStart = data.find(d => d.date.getFullYear() === latest.date.getFullYear());
+            if (ytdStart) {
+                const ytdReturn = ((latest.close - ytdStart.close) / ytdStart.close * 100).toFixed(1);
+                document.getElementById('ytdReturn').textContent = (ytdReturn >= 0 ? '+' : '') + ytdReturn + '%';
+            }
+            
+            // Market Cap (approximate)
+            const marketCap = (latest.close * 12400000000 / 1000000000000).toFixed(2);
+            document.getElementById('marketCap').textContent = `$${marketCap}T`;
+            
+            // Technical indicators
+            const sma50 = calculateSMA(data, 50);
+            const sma200 = calculateSMA(data, 200);
+            document.getElementById('sma50').textContent = `$${sma50.toFixed(2)}`;
+            document.getElementById('sma200').textContent = `$${sma200.toFixed(2)}`;
+            
+            // 52-week high/low
+            const yearData = data.slice(-252); // Approx 252 trading days
+            const high52 = Math.max(...yearData.map(d => d.high));
+            const low52 = Math.min(...yearData.map(d => d.low));
+            document.getElementById('high52').textContent = `$${high52.toFixed(2)}`;
+            document.getElementById('low52').textContent = `$${low52.toFixed(2)}`;
+        }
+
+        function calculateSMA(data, period) {
+            if (data.length < period) return data[data.length - 1].close;
+            const sum = data.slice(-period).reduce((acc, d) => acc + d.close, 0);
+            return sum / period;
+        }
+
+        function calculateRSI(data, period = 14) {
+            if (data.length < period + 1) return 50;
+            
+            let gains = 0, losses = 0;
+            for (let i = data.length - period; i < data.length; i++) {
+                const change = data[i].close - data[i-1].close;
+                if (change > 0) gains += change;
+                else losses -= change;
+            }
+            
+            const avgGain = gains / period;
+            const avgLoss = losses / period;
+            const rs = avgGain / avgLoss;
+            return 100 - (100 / (1 + rs));
+        }
+
+        function initCharts() {
+            initPriceChart();
+            initVolumeChart();
+            initVolatilityChart();
+            initReturnsChart();
+            initMonthlyChart();
+            initRSIChart();
+        }
+
+        function initPriceChart() {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            const data = getFilteredData();
+            
+            const labels = data.map(d => d.date.toISOString().split('T')[0]);
+            const prices = data.map(d => d.close);
+            const sma50 = data.map((d, i) => i >= 50 ? calculateSMA(data.slice(0, i+1), 50) : null);
+            const sma200 = data.map((d, i) => i >= 200 ? calculateSMA(data.slice(0, i+1), 200) : null);
+            
+            if (charts.price) charts.price.destroy();
+            
+            charts.price = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Close Price',
+                            data: prices,
+                            borderColor: '#4285F4',
+                            backgroundColor: 'rgba(66, 133, 244, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.1
+                        },
+                        {
+                            label: '50-Day SMA',
+                            data: sma50,
+                            borderColor: '#FBBC05',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1
+                        },
+                        {
+                            label: '200-Day SMA',
+                            data: sma200,
+                            borderColor: '#EA4335',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { labels: { color: '#9AA0A6' } }
+                    },
+                    scales: {
+                        x: { 
+                            ticks: { color: '#9AA0A6', maxTicksLimit: 8 },
+                            grid: { color: '#5F6368' }
+                        },
+                        y: { 
+                            ticks: { color: '#9AA0A6' },
+                            grid: { color: '#5F6368' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initVolumeChart() {
+            const ctx = document.getElementById('volumeChart').getContext('2d');
+            const data = getFilteredData();
+            
+            const labels = data.map(d => d.date.toISOString().split('T')[0]);
+            const volumes = data.map(d => d.volume);
+            
+            if (charts.volume) charts.volume.destroy();
+            
+            charts.volume = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Volume',
+                        data: volumes,
+                        backgroundColor: '#FBBC05',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#9AA0A6', maxTicksLimit: 6 }, grid: { display: false } },
+                        y: { ticks: { color: '#9AA0A6' }, grid: { color: '#5F6368' } }
+                    }
+                }
+            });
+        }
+
+        function initVolatilityChart() {
+            const ctx = document.getElementById('volatilityChart').getContext('2d');
+            const data = getFilteredData();
+            
+            // Calculate Bollinger Bands (20-day SMA ± 2 standard deviations)
+            const labels = data.map(d => d.date.toISOString().split('T')[0]);
+            const upperBand = [];
+            const lowerBand = [];
+            const sma = [];
+            
+            for (let i = 19; i < data.length; i++) {
+                const slice = data.slice(i-19, i+1);
+                const mean = slice.reduce((sum, d) => sum + d.close, 0) / 20;
+                const variance = slice.reduce((sum, d) => sum + Math.pow(d.close - mean, 2), 0) / 20;
+                const std = Math.sqrt(variance);
+                
+                sma.push(mean);
+                upperBand.push(mean + 2 * std);
+                lowerBand.push(mean - 2 * std);
+            }
+            
+            if (charts.volatility) charts.volatility.destroy();
+            
+            charts.volatility = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels.slice(19),
+                    datasets: [
+                        {
+                            label: 'Upper Band',
+                            data: upperBand,
+                            borderColor: '#34A853',
+                            borderWidth: 1,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'SMA 20',
+                            data: sma,
+                            borderColor: '#4285F4',
+                            borderWidth: 2,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Lower Band',
+                            data: lowerBand,
+                            borderColor: '#EA4335',
+                            borderWidth: 1,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#9AA0A6' } } },
+                    scales: {
+                        x: { ticks: { color: '#9AA0A6', maxTicksLimit: 6 }, grid: { color: '#5F6368' } },
+                        y: { ticks: { color: '#9AA0A6' }, grid: { color: '#5F6368' } }
+                    }
+                }
+            });
+        }
+
+        function initReturnsChart() {
+            const ctx = document.getElementById('returnsChart').getContext('2d');
+            const data = getFilteredData();
+            
+            const returns = data.slice(1).map((d, i) => ((d.close - data[i].close) / data[i].close * 100));
+            
+            // Create histogram bins
+            const bins = {};
+            returns.forEach(r => {
+                const bin = Math.floor(r / 0.5) * 0.5;
+                bins[bin] = (bins[bin] || 0) + 1;
+            });
+            
+            const sortedBins = Object.entries(bins).sort((a, b) => parseFloat(a[0]) - parseFloat(b[0]));
+            
+            if (charts.returns) charts.returns.destroy();
+            
+            charts.returns = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedBins.map(b => b[0] + '%'),
+                    datasets: [{
+                        label: 'Frequency',
+                        data: sortedBins.map(b => b[1]),
+                        backgroundColor: sortedBins.map(b => parseFloat(b[0]) >= 0 ? '#34A853' : '#EA4335'),
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#9AA0A6', maxTicksLimit: 8 }, grid: { display: false } },
+                        y: { ticks: { color: '#9AA0A6' }, grid: { color: '#5F6368' } }
+                    }
+                }
+            });
+        }
+
+        function initMonthlyChart() {
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            const data = getFilteredData();
+            
+            const monthlyReturns = {};
+            data.forEach(d => {
+                const key = `${d.date.getFullYear()}-${String(d.date.getMonth() + 1).padStart(2, '0')}`;
+                if (!monthlyReturns[key]) {
+                    monthlyReturns[key] = { start: d.close, end: d.close, count: 0 };
+                }
+                monthlyReturns[key].end = d.close;
+                monthlyReturns[key].count++;
+            });
+            
+            const labels = Object.keys(monthlyReturns);
+            const returns = Object.values(monthlyReturns).map(m => ((m.end - m.start) / m.start * 100));
+            
+            if (charts.monthly) charts.monthly.destroy();
+            
+            charts.monthly = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels.slice(-12), // Last 12 months
+                    datasets: [{
+                        label: 'Monthly Return %',
+                        data: returns.slice(-12),
+                        backgroundColor: returns.slice(-12).map(r => r >= 0 ? '#34A853' : '#EA4335'),
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#9AA0A6', maxTicksLimit: 6 }, grid: { display: false } },
+                        y: { ticks: { color: '#9AA0A6' }, grid: { color: '#5F6368' } }
+                    }
+                }
+            });
+        }
+
+        function initRSIChart() {
+            const ctx = document.getElementById('rsiChart').getContext('2d');
+            const data = getFilteredData();
+            
+            const rsiValues = [];
+            const labels = [];
+            
+            for (let i = 14; i < data.length; i++) {
+                const rsi = calculateRSI(data.slice(0, i + 1));
+                rsiValues.push(rsi);
+                labels.push(data[i].date.toISOString().split('T')[0]);
+            }
+            
+            if (charts.rsi) charts.rsi.destroy();
+            
+            charts.rsi = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'RSI',
+                        data: rsiValues,
+                        borderColor: '#FBBC05',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        annotation: {
+                            annotations: {
+                                line1: {
+                                    type: 'line',
+                                    yMin: 70,
+                                    yMax: 70,
+                                    borderColor: '#EA4335',
+                                    borderWidth: 1,
+                                    borderDash: [5, 5]
+                                },
+                                line2: {
+                                    type: 'line',
+                                    yMin: 30,
+                                    yMax: 30,
+                                    borderColor: '#34A853',
+                                    borderWidth: 1,
+                                    borderDash: [5, 5]
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#9AA0A6', maxTicksLimit: 6 }, grid: { color: '#5F6368' } },
+                        y: { 
+                            min: 0, 
+                            max: 100, 
+                            ticks: { color: '#9AA0A6' }, 
+                            grid: { color: '#5F6368' } 
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTable() {
+            const data = getFilteredData().slice(-20).reverse();
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            data.forEach((d, i) => {
+                const prev = data[i + 1] || d;
+                const change = d.close - prev.close;
+                const changePct = (change / prev.close * 100).toFixed(2);
+                
+                const row = `
+                    <tr>
+                        <td>${d.date.toISOString().split('T')[0]}</td>
+                        <td>$${d.open.toFixed(2)}</td>
+                        <td>$${d.high.toFixed(2)}</td>
+                        <td>$${d.low.toFixed(2)}</td>
+                        <td><strong>$${d.close.toFixed(2)}</strong></td>
+                        <td>$${d.adjClose.toFixed(2)}</td>
+                        <td>${formatNumber(d.volume)}</td>
+                        <td class="${change >= 0 ? 'positive' : 'negative'}">${change >= 0 ? '+' : ''}${changePct}%</td>
+                        <td>
+                            <span class="trend-indicator ${change >= 0 ? 'trend-up' : 'trend-down'}">
+                                <i class="fas fa-${change >= 0 ? 'arrow-up' : 'arrow-down'}"></i>
+                                ${Math.abs(changePct)}%
+                            </span>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) return (num/1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num/1000).toFixed(1) + 'K';
+            return num.toString();
+        }
+
+        function updateDashboard() {
+            document.getElementById('loading').classList.add('active');
+            setTimeout(() => {
+                updateStats();
+                Object.values(charts).forEach(chart => {
+                    if (chart) chart.destroy();
+                });
+                initCharts();
+                updateTable();
+                document.getElementById('loading').classList.remove('active');
+            }, 800);
+        }
+
+        function showLoading() {
+            document.getElementById('loading').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('active');
+        }
+
+        function setChartType(type) {
+            // Update active button
+            document.querySelectorAll('.chart-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Reinitialize chart with new type
+            if (type === 'candle') {
+                // Would implement candlestick chart here
+                alert('Candlestick view would show OHLC bars');
+            } else if (type === 'compare') {
+                // Would add S&P 500 comparison
+                alert('Index comparison would overlay S&P 500/NASDAQ');
+            }
+        }
+
+        // Period selection handler
+        document.getElementById('periodSelect').addEventListener('change', function() {
+            const period = this.value;
+            const endDate = new Date('2023-11-10');
+            const startDate = new Date(endDate);
+            
+            switch(period) {
+                case '1M': startDate.setMonth(startDate.getMonth() - 1); break;
+                case '3M': startDate.setMonth(startDate.getMonth() - 3); break;
+                case '6M': startDate.setMonth(startDate.getMonth() - 6); break;
+                case '1Y': startDate.setFullYear(startDate.getFullYear() - 1); break;
+                case '5Y': startDate.setFullYear(startDate.getFullYear() - 5); break;
+                case 'ALL': startDate.setTime(new Date('2004-08-19').getTime()); break;
+            }
+            
+            document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+            document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+        });
+
+        window.addEventListener('load', initDashboard);
+    </script>
+</body>
+</html>
